@@ -8,10 +8,9 @@
 #include <vector>
 #include <string>
 
-
 using namespace std;
 
-vector <pair<string,int>> beacon_list;
+vector <pair<string,int>> List;
 pcap_t* handle;
 
 struct Radiotap_hdr{
@@ -48,6 +47,8 @@ struct WirelessManage{
     uint8_t tag_len; 
 };
 
+
+
 void print_frame(const u_char* packet){
     struct Radiotap_hdr* radio_hdr = (struct Radiotap_hdr*)packet;
     struct Beacon_Frame* beacon = (struct Beacon_Frame*)(packet+radio_hdr->hdr_len);
@@ -57,28 +58,49 @@ void print_frame(const u_char* packet){
 	char buf[100]={0,};
 
     if(beacon->FCF[0] != 0x80){
-        printf("Not Beacon!\n\n");
+        printf("ERROR!\n\n");
         return ;
     }
 
     printf("BSSID : ");
     for(int i=0;i<5;i++){
-        printf("%02x:",beacon->BSSID[i]);
+        printf("%02x",beacon->BSSID[i]);
+        if(i!=5){
+                printf(":");
+            }
     }
-    printf("%02x\n",beacon->BSSID[5]);
+    printf("\n");
 
 
     tag_len = wire_manage->tag_len;
-
     memcpy(buf,(char*)wire_manage+14,wire_manage->tag_len);
 
-    printf("SSID :");
 
+    printf("SSID  : ");
     for(int i=0;i<=tag_len;i++){
         printf("%c",buf[i]);
     }
-    printf("\n\n");
+    printf("\n");
 
+
+    char* ssid = buf;
+    int flag =1;
+    for(int i=0;i<List.size();i++){
+        
+        if(!strncmp(ssid,List[i].first.c_str(),sizeof(List[i].first.c_str()))){
+            List[i].second += 1;
+            printf("BEACON : %d\n",List[i].second);
+            flag =0;
+            break;
+        }
+    }
+    
+    if(flag){
+        pair<string,int> next = make_pair(ssid,0);
+        List.push_back(next);
+        printf("BEACON : 0\n");
+    }
+    printf("\n\n");
 }
 
 
